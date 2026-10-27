@@ -6,57 +6,74 @@
 
 *Stream Gigabytes in Seconds. Zero Cloud Storage. Zero File Size Limits.*
 
+[![Live App](https://img.shields.io/badge/Live_App-air--stream.pages.dev-00f0ff?style=for-the-badge&logo=google-chrome&logoColor=black)](https://air-stream.pages.dev)
+[![PWA](https://img.shields.io/badge/PWA-Installable-8b5cf6?style=for-the-badge&logo=pwa&logoColor=white)](https://air-stream.pages.dev)
+
 [![AirStream CI](https://github.com/QuantumTechCoder/AirStream/actions/workflows/ci.yml/badge.svg)](https://github.com/QuantumTechCoder/AirStream/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![WebRTC](https://img.shields.io/badge/WebRTC-RTCDataChannel-cyan.svg)](https://webrtc.org/)
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare_Pages-Functions-F38020.svg?logo=cloudflare)](https://pages.cloudflare.com/)
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare_Pages-Functions-F38020.svg?logo=cloudflare)](https://air-stream.pages.dev)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF.svg?logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
-[![PWA](https://img.shields.io/badge/PWA-Installable-purple.svg)](https://web.dev/progressive-web-apps/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/QuantumTechCoder/AirStream/pulls)
 
-[**Live Demo**](https://airstream.pages.dev) • [**Report Bug**](https://github.com/QuantumTechCoder/AirStream/issues) • [**Request Feature**](https://github.com/QuantumTechCoder/AirStream/issues)
+### 👉 **[Use AirStream Now at air-stream.pages.dev](https://air-stream.pages.dev)** 👈
+
+*No accounts. No installations. No cloud upload limits.*
 
 </div>
 
 ---
 
-## 💥 The Problem AirStream Solves
+## 💥 Why AirStream?
 
-Traditional file transfer services (like **WeTransfer**, **Google Drive**, or **Dropbox**) have major drawbacks:
-1. ⏳ **The "Double Wait" Penalty**: Sender uploads 100% of the file to a cloud server, *then* recipient waits to download it.
-2. 🛑 **Arbitrary Size Limits**: Free tiers cut you off at 2GB, charge monthly subscriptions, or throttle download speeds.
-3. 🔓 **Privacy Concerns**: Your confidential files, photos, and proprietary source code sit on third-party servers.
-4. 🍏 **Platform Lock-In**: Apple's AirDrop only works between Apple hardware.
-
----
-
-## ✨ The AirStream Solution
-
-**AirStream** turns your browser into a high-speed, direct peer-to-peer transmission terminal:
-- **Instant Streaming**: Recipient receives bytes **as they are being sent** in real time—no waiting for cloud uploads.
-- **Zero Size Limits**: Send 500MB, 10GB, or 100GB+ files without paying a penny.
-- **Local Wi-Fi Gigabit Speeds**: When both devices are on the same Wi-Fi, transfers bypass the public internet entirely, transferring at full router hardware speed (100MB/s+).
-- **100% End-to-End Encrypted**: Data flows through DTLS-SRTP encrypted WebRTC `RTCDataChannel` tunnels. No intermediate server ever touches your data.
-- **Cross-Platform Everywhere**: Works seamlessly across Windows, macOS, Linux, Android, iOS, ChromeOS, and Safari.
-- **Multi-Tool Workspace**: Also bundles an **Instant Live Clipboard** and a **Real-Time Collaborative Code Editor**.
+Sending files with traditional services (**WeTransfer**, **Google Drive**, **Dropbox**) sucks:
+- ⏳ **The "Double Wait"**: You wait 20 minutes for your file to upload to their cloud server, and then your recipient waits another 20 minutes to download it.
+- 🛑 **Greedy Limits**: 2GB free cap, subscription paywalls, and artificial download bandwidth throttling.
+- 🔓 **Zero Privacy**: Your private photos, confidential files, or source code end up stored on third-party servers.
+- 🍏 **Walled Gardens**: Apple's AirDrop only talks to Apple hardware.
 
 ---
 
-## 📊 Feature Comparison Matrix
+## ✨ Enter AirStream
+
+**AirStream connects two or more browsers directly over an encrypted WebRTC data tunnel:**
+
+- 🚀 **Zero Size Limits**: Stream 500MB, 5GB, or 50GB+ files without paying a cent or hitting caps.
+- ⚡ **Real-Time Streaming**: The recipient starts receiving chunks **immediately as you send them**—no waiting for cloud uploads to finish.
+- 📶 **Gigabit LAN Speeds**: When both devices are on the same Wi-Fi or local network, transfers bypass your ISP entirely, reaching full hardware speeds (100MB/s+).
+- 🔒 **End-to-End Encrypted**: Files flow directly device-to-device through DTLS-SRTP encryption. No intermediate server ever touches your data.
+- 📱 **Universal Cross-Platform**: Works instantly across Windows, macOS, Linux, Android, iOS, ChromeOS, and Safari.
+- 📋 **Live Shared Clipboard**: Copy text, links, or code on your PC and paste them instantly on your phone.
+- 💻 **Collaborative Code Workspace**: Real-time synchronized CodeMirror scratchpad with syntax highlighting (JS, TS, Python, Markdown, JSON).
+- 🔌 **Air-Gapped / Offline Mode**: Connect devices on isolated local networks with zero internet access using our offline SDP QR / token exchanger.
+
+---
+
+## 📊 How Does AirStream Compare?
 
 | Feature | ⚡ AirStream | WeTransfer | AirDrop | Google Drive | Wormhole |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Max File Size** | 🚀 **Unlimited** | 2 GB (Free) | Unlimited | 15 GB quota | 10 GB |
-| **Direct P2P Streaming** | ✅ **Yes** | ❌ No | ✅ Yes | ❌ No | ❌ No |
+| **Direct P2P Streaming** | ✅ **Instant** | ❌ Double Wait | ✅ Instant | ❌ Double Wait | ❌ Double Wait |
 | **Cross-Platform (PC ↔ Mac ↔ Phone)** | ✅ **Universal** | ✅ Universal | ❌ Apple Only | ✅ Universal | ✅ Universal |
-| **Local Wi-Fi Bypasses ISP** | ✅ **Yes** | ❌ No | ✅ Yes | ❌ No | ❌ No |
-| **Live Shared Clipboard** | ✅ **Yes** | ❌ No | ❌ Apple Only | ❌ No | ❌ No |
-| **Collaborative Code Editor** | ✅ **Yes** | ❌ No | ❌ No | ❌ No | ❌ No |
-| **No Account / Login Required** | ✅ **Yes** | ✅ Yes | ❌ Apple ID | ❌ Google Login | ✅ Yes |
+| **Local Wi-Fi Bypasses ISP** | ✅ **Yes (LAN speeds)**| ❌ Cloud only | ✅ Yes | ❌ Cloud only | ❌ Cloud only |
+| **Live Shared Clipboard** | ✅ **Built-in** | ❌ No | ❌ Apple Only | ❌ No | ❌ No |
+| **Collaborative Code Editor** | ✅ **Built-in** | ❌ No | ❌ No | ❌ No | ❌ No |
+| **No Account / Signup Needed** | ✅ **100% Frictionless** | ✅ Yes | ❌ Apple ID | ❌ Google Login | ✅ Yes |
 | **Air-Gapped / Offline LAN Mode** | ✅ **Yes (SDP QR)** | ❌ No | ❌ No | ❌ No | ❌ No |
-| **100% Open Source** | ✅ **MIT** | ❌ Proprietary | ❌ Proprietary | ❌ Proprietary | ❌ Proprietary |
+| **Open Source** | ✅ **MIT** | ❌ Proprietary | ❌ Proprietary | ❌ Proprietary | ❌ Proprietary |
+
+---
+
+## 🎯 How to Use (3 Simple Steps)
+
+You don't need to install anything or set up any servers. Just open the web app:
+
+1. **Open the App**: Head to **[air-stream.pages.dev](https://air-stream.pages.dev)** on Device A.
+2. **Pair Devices**: Click **"Pair Devices"** and scan the QR code with your phone, or share the 6-character room code / link with your peer.
+3. **Stream Away**: Drag and drop files into the Drop Zone, paste text into the Live Clipboard, or code together in the workspace!
+
+*(Tip: Click "Install" in your browser's address bar to install AirStream as a standalone PWA on desktop or mobile!)*
 
 ---
 
@@ -65,8 +82,8 @@ Traditional file transfer services (like **WeTransfer**, **Google Drive**, or **
 ```mermaid
 flowchart LR
     subgraph DeviceA["💻 Device A (Sender)"]
-        UI_A["AirStream UI"]
-        FSA_A["Web Streams / File Slicer\n(64KB Framed Chunks)"]
+        UI_A["AirStream Web UI"]
+        FSA_A["64KB Chunk Slicer\n(Framed Packets)"]
         Backpressure["Backpressure Throttle\n(bufferedAmount <= 256KB)"]
         RTC_A["WebRTC RTCDataChannel\n(DTLS-SRTP Encrypted)"]
         
@@ -75,97 +92,66 @@ flowchart LR
         Backpressure --> RTC_A
     end
 
-    subgraph Signaling["☁️ Cloudflare Pages Functions (Free Tier)"]
-        CF_Signal["/api/signal\n(Ephemeral Handshake Mailbox)"]
+    subgraph Signaling["☁️ Ephemeral Handshake Mailbox"]
+        CF_Signal["Cloudflare Pages Function\n(/api/signal)"]
     end
 
     subgraph DeviceB["📱 Device B (Receiver)"]
         RTC_B["WebRTC RTCDataChannel\n(DTLS-SRTP Encrypted)"]
         Assembler["Memory-Safe Chunk Assembler\n(Blob URL / StreamSaver)"]
-        UI_B["AirStream UI"]
+        UI_B["AirStream Web UI"]
 
         RTC_B --> Assembler
         Assembler --> UI_B
     end
 
-    DeviceA <.. "1. Initial SDP / ICE Handshake" ..> CF_Signal
-    DeviceB <.. "1. Initial SDP / ICE Handshake" ..> CF_Signal
+    DeviceA <.. "1. Initial Handshake / SDP Exchange" ..> CF_Signal
+    DeviceB <.. "1. Initial Handshake / SDP Exchange" ..> CF_Signal
     RTC_A <=== "2. Direct High-Speed P2P Data Tunnel (Files, Clipboard, Code)" ===> RTC_B
 ```
 
-### 🧠 Deep-Dive Engineering Highlights
+### 🧠 Engineering Highlights
 
-1. **Backpressure-Driven Chunking**:
-   Sending gigabytes over `RTCDataChannel` without flow control causes browser tabs to crash with `Out of Memory` errors. AirStream uses a sliding 64KB chunking engine that monitors `RTCDataChannel.bufferedAmount`. When the buffer exceeds 1MB, the sender pauses and awaits `onbufferedamountlow`, ensuring smooth, non-blocking performance.
-
-2. **Zero-Config Cloudflare Pages Functions Signaling**:
-   AirStream uses Cloudflare Pages Functions (`/api/signal/*`) as a lightweight, ephemeral mailbox for SDP offers, answers, and ICE candidate exchanges. Once paired, the server is completely out of the loop.
-
-3. **Air-Gapped / Offline SDP Mode**:
-   Have two laptops connected to an ad-hoc Wi-Fi network without internet? AirStream includes an **Offline SDP Token Exchanger** that lets peers connect by scanning an SDP QR code or pasting tokens.
-
-4. **Multi-Channel Multiplexing**:
-   - `files`: Binary (`arraybuffer`) channel for raw file streaming.
-   - `clipboard`: Fast JSON channel for live clipboard sync.
-   - `workspace`: Low-latency delta channel for collaborative CodeMirror editing.
-   - `ping`: Active heartbeat channel measuring live round-trip time (RTT in ms).
+- **Backpressure Flow Control**: Slices files into 64KB chunks and monitors `RTCDataChannel.bufferedAmount`. When the buffer exceeds 1MB, sending pauses until the socket drains, preventing browser memory crashes on massive multi-gigabyte transfers.
+- **Multiplexed Channels**:
+  - `files`: Binary (`arraybuffer`) channel for high-throughput streaming.
+  - `clipboard`: Fast JSON channel for live clipboard sync.
+  - `workspace`: Low-latency delta sync for CodeMirror editing.
+  - `ping`: Active heartbeat channel measuring real-time RTT latency in milliseconds.
+- **Dual STUN Configuration**: Uses Cloudflare STUN (`stun:stun.cloudflare.com:3478`) and Google STUN (`stun:stun.l.google.com:19302`) for NAT traversal.
 
 ---
 
-## 🚀 Quick Start Guide
+## 💻 Contributing & Local Development
 
-### Prerequisites
-- Node.js 18+ (tested on Node v20 & v24)
-- npm or pnpm
+> **Note**: If you just want to use AirStream, you do **not** need to download or run anything locally—simply visit **[air-stream.pages.dev](https://air-stream.pages.dev)**! 
+> 
+> The instructions below are for developers who want to contribute features, fix bugs, or test changes locally.
 
-### 1. Clone & Install
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/QuantumTechCoder/AirStream.git
 cd AirStream
 npm install
 ```
 
-### 2. Start Local Development
+### 2. Start Dev Server
 ```bash
 npm run dev
 ```
-Open **[http://localhost:5173](http://localhost:5173)**.
+Open **`http://localhost:5173`**.
 
-> **💡 Multi-Tab Testing**: AirStream automatically includes an in-browser `BroadcastChannel` bridge. Open two browser tabs or private windows, click **"Pair Devices"**, and watch them connect instantly without external setup!
+> **💡 Multi-Tab Testing**: AirStream includes a local `BroadcastChannel` fallback. Open two browser tabs or private windows, click **"Pair Devices"**, and test file streaming and real-time syncing locally with zero external configuration!
 
 ### 3. Run Automated Tests
 ```bash
 npm run test
 ```
 
-### 4. Build for Production
+### 4. Build & Typecheck
 ```bash
 npm run build
 ```
-
----
-
-## 🌐 Deploy to Cloudflare Pages in 60 Seconds
-
-AirStream is architected to run seamlessly on the **Cloudflare Pages & Functions 100% Free Tier**:
-
-1. Fork this repository.
-2. In the [Cloudflare Dashboard](https://dash.cloudflare.com/), go to **Workers & Pages** &rarr; **Create application** &rarr; **Pages** &rarr; **Connect to Git**.
-3. Select your forked **AirStream** repository.
-4. Set Build Settings:
-   - **Framework preset**: `Vite`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-5. Click **Save and Deploy**. Your P2P streaming node is live!
-
----
-
-## 📱 Progressive Web App (PWA)
-
-AirStream is a full-featured PWA:
-- 📲 **Installable**: Install as a desktop or mobile application directly from Chrome, Edge, or Safari.
-- ⚡ **Offline-Ready**: The application shell is cached by Service Workers for instant loading anywhere.
-- 📋 **Share Target**: Ready for native OS "Share to AirStream" integration.
 
 ---
 
@@ -185,13 +171,13 @@ Please review our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduc
 
 ## 📜 License
 
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 ---
 
 <div align="center">
 
-### ⭐ If you find AirStream useful, please give it a star on GitHub! ⭐
+### ⭐ If you love AirStream, please star the repo on GitHub! ⭐
 
 Built with ❤️ by [**QuantumTechCoder**](https://github.com/QuantumTechCoder)
 
