@@ -155,6 +155,33 @@ npm run build
 
 ---
 
+## 💼 White-Label & Commercial Services
+
+### 🏢 1. Custom White-Label Deployment for Teams (30 USDC — Base / Polygon)
+Many creative agencies, video editors, and privacy-conscious teams want their own branded P2P file-sharing & code-collab portal without paying recurring $20/user/month cloud subscription fees:
+- **Custom Domain**: Deployed on your company domain (e.g. `transfer.yourcompany.com`).
+- **Brand Customization**: Your company logo, customized theme colors, favicon, and meta tags.
+- **Dedicated Private TURN**: Unrestricted high-bandwidth TURN relay configuration with zero speed throttling.
+- **24-Hour Turnaround Guarantee**: Deployed and ready within 24 hours.
+- 📩 **Get Started**: Email [quantumtechsperts@gmail.com](mailto:quantumtechsperts@gmail.com?subject=AirStream%20White-Label%20Deployment) or order directly with on-chain verification at [air-stream.pages.dev](https://air-stream.pages.dev).
+
+---
+
+### 🛡️ 2. Pro Firewall-Bypass TURN Relay Key (5 USDC — Lifetime)
+While basic WebRTC works great on standard home Wi-Fi, aggressive corporate firewalls, university proxies, and symmetric cellular NATs can block direct peer connections:
+- Unlock priority high-throughput TURN relays with TCP fallback over port 443 (undetectable by DPI firewalls).
+- Unlock custom TURN server inputs (plug in your own private coturn, Twilio, or Metered credentials).
+- Cryptographically verified on-chain.
+
+---
+
+### ☕ 3. Fuel the Project (Tip with USDC on Base / Polygon)
+AirStream is 100% open-source (MIT) and free to use. If AirStream saved you 20 minutes transferring a 10GB video or confidential folder:
+- **Recipient EVM Address (Base / Polygon)**: `0x2cef0473f985156eDe84312Ce0BeB94B602d26E4`
+- 1-click Rabby / MetaMask tipping directly on [air-stream.pages.dev](https://air-stream.pages.dev).
+
+---
+
 ## 🤝 Contributing
 
 Contributions are what make the open-source community an incredible place to learn, inspire, and create. Any contributions you make are **greatly appreciated**!

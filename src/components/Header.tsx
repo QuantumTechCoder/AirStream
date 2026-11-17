@@ -14,14 +14,19 @@ import {
   Tablet,
   Activity,
   Share2,
+  Shield,
+  Heart,
 } from 'lucide-react'
 import { useAirStream } from '../context/AirStreamContext'
+import { getSavedProLicense } from '../utils/paymentVerifier'
 
 interface HeaderProps {
   onOpenRoomModal: () => void
+  onOpenTurnPass?: () => void
+  onOpenTip?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenRoomModal }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenRoomModal, onOpenTurnPass, onOpenTip }) => {
   const {
     connectionState,
     roomId,
@@ -33,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRoomModal }) => {
   } = useAirStream()
 
   const [copiedLink, setCopiedLink] = useState(false)
+  const isPro = !!getSavedProLicense()?.active
 
   const handleCopyLink = () => {
     if (!roomId) return
@@ -137,6 +143,34 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRoomModal }) => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {/* Pro Pass Button */}
+          {onOpenTurnPass && (
+            <button
+              onClick={onOpenTurnPass}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                isPro
+                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+              }`}
+              title={isPro ? 'Pro Relay Pass Active' : 'Unlock Pro Firewall-Bypass TURN Relay'}
+            >
+              <Shield className={`w-3.5 h-3.5 ${isPro ? 'text-emerald-400' : 'text-cyan-400'}`} />
+              <span className="hidden sm:inline">{isPro ? 'Pro Active' : 'Pro Relay'}</span>
+            </button>
+          )}
+
+          {/* Tip Button */}
+          {onOpenTip && (
+            <button
+              onClick={onOpenTip}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border border-pink-500/20 text-xs font-semibold transition-all"
+              title="Tip with Base / Polygon USDC"
+            >
+              <Heart className="w-3.5 h-3.5 fill-pink-400 text-pink-400" />
+              <span className="hidden md:inline">Tip</span>
+            </button>
+          )}
+
           {roomId ? (
             <>
               <button

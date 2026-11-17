@@ -9,6 +9,7 @@ import {
   Layers,
   Shield,
   Zap,
+  Heart,
 } from 'lucide-react'
 import { Header } from './components/Header'
 import { RoomModal } from './components/RoomModal'
@@ -17,6 +18,9 @@ import { TransferList } from './components/FileTransfer/TransferList'
 import { ClipboardPanel } from './components/Clipboard/ClipboardPanel'
 import { CodeEditorPanel } from './components/Workspace/CodeEditorPanel'
 import { InstallBanner } from './components/PWA/InstallBanner'
+import { WhiteLabelBanner } from './components/Monetization/WhiteLabelBanner'
+import { TurnPassModal } from './components/Monetization/TurnPassModal'
+import { TipModal } from './components/Monetization/TipModal'
 import { useAirStream } from './context/AirStreamContext'
 import { formatBytes } from './utils/device'
 
@@ -30,6 +34,8 @@ export const AppContent: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'files' | 'clipboard' | 'workspace'>('files')
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false)
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false)
+  const [isTurnPassModalOpen, setIsTurnPassModalOpen] = useState(false)
 
   const activeTransfersCount = transfers.filter(
     (t) => t.status === 'transferring' || t.status === 'paused'
@@ -38,7 +44,11 @@ export const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       {/* Navigation Header */}
-      <Header onOpenRoomModal={() => setIsRoomModalOpen(true)} />
+      <Header
+        onOpenRoomModal={() => setIsRoomModalOpen(true)}
+        onOpenTurnPass={() => setIsTurnPassModalOpen(true)}
+        onOpenTip={() => setIsTipModalOpen(true)}
+      />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -75,6 +85,9 @@ export const AppContent: React.FC = () => {
             <div className="absolute right-0 top-0 -bottom-10 w-96 bg-gradient-to-l from-cyan-500/10 to-transparent pointer-events-none rounded-full blur-3xl" />
           </div>
         )}
+
+        {/* Custom White-Label Deployment Showcase */}
+        <WhiteLabelBanner />
 
         {/* Feature Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -146,7 +159,7 @@ export const AppContent: React.FC = () => {
           {activeTab === 'files' && (
             <div className="space-y-6">
               <FileDropZone onOpenRoomModal={() => setIsRoomModalOpen(true)} />
-              <TransferList />
+              <TransferList onOpenTip={() => setIsTipModalOpen(true)} />
             </div>
           )}
 
@@ -200,24 +213,41 @@ export const AppContent: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/60 bg-[#090d16] py-4 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <footer className="border-t border-slate-800/60 bg-[#090d16] py-5 px-4 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>
-            AirStream &bull; Direct Peer-to-Peer File Transfer &amp; Workspace powered by WebRTC
-            RTCDataChannel &amp; Cloudflare Pages Functions.
+            AirStream &bull; Direct Peer-to-Peer File Transfer &amp; Workspace powered by WebRTC RTCDataChannel.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => setIsTipModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border border-pink-500/20 text-[11px] font-semibold transition-all"
+            >
+              <Heart className="w-3 h-3 fill-pink-400 text-pink-400" />
+              <span>Fuel the Dev (Tip USDC)</span>
+            </button>
+            <button
+              onClick={() => setIsTurnPassModalOpen(true)}
+              className="text-cyan-400 hover:underline text-[11px] font-medium"
+            >
+              Pro TURN Pass
+            </button>
+            <span>&bull;</span>
             <span className="text-slate-400">Zero Cloud Storage</span>
             <span>&bull;</span>
             <span className="text-slate-400">PWA Ready</span>
-            <span>&bull;</span>
-            <span className="text-slate-400">Unlimited Size</span>
           </div>
         </div>
       </footer>
 
-      {/* Room Modal */}
+      {/* Modals */}
       <RoomModal isOpen={isRoomModalOpen} onClose={() => setIsRoomModalOpen(false)} />
+      <TipModal isOpen={isTipModalOpen} onClose={() => setIsTipModalOpen(false)} />
+      <TurnPassModal
+        isOpen={isTurnPassModalOpen}
+        onClose={() => setIsTurnPassModalOpen(false)}
+        onUnlocked={() => setIsTurnPassModalOpen(false)}
+      />
 
       {/* PWA Install Banner */}
       <InstallBanner />

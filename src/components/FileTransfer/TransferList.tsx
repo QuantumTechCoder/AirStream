@@ -18,12 +18,17 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
+  Heart,
 } from 'lucide-react'
 import { useAirStream } from '../../context/AirStreamContext'
 import { formatBytes, formatDuration, formatSpeed } from '../../utils/device'
 import type { TransferItem } from '../../core/webrtc/types'
 
-export const TransferList: React.FC = () => {
+interface TransferListProps {
+  onOpenTip?: () => void
+}
+
+export const TransferList: React.FC<TransferListProps> = ({ onOpenTip }) => {
   const {
     transfers,
     pauseTransfer,
@@ -92,6 +97,7 @@ export const TransferList: React.FC = () => {
             onPause={() => pauseTransfer(item.id)}
             onResume={() => resumeTransfer(item.id)}
             onCancel={() => cancelTransfer(item.id)}
+            onOpenTip={onOpenTip}
           />
         ))}
       </div>
@@ -105,6 +111,7 @@ interface TransferCardProps {
   onPause: () => void
   onResume: () => void
   onCancel: () => void
+  onOpenTip?: () => void
 }
 
 const TransferCard: React.FC<TransferCardProps> = ({
@@ -113,6 +120,7 @@ const TransferCard: React.FC<TransferCardProps> = ({
   onPause,
   onResume,
   onCancel,
+  onOpenTip,
 }) => {
   return (
     <div className="relative overflow-hidden rounded-2xl glass-panel p-4 transition-all duration-200 hover:border-slate-700">
@@ -237,6 +245,17 @@ const TransferCard: React.FC<TransferCardProps> = ({
                 <Download className="w-4 h-4" />
                 <span>Save</span>
               </a>
+            )}
+
+            {item.status === 'completed' && onOpenTip && (
+              <button
+                onClick={onOpenTip}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border border-pink-500/30 text-xs font-semibold transition-all active:scale-95"
+                title="Fuel the dev with 1-2 USDC"
+              >
+                <Heart className="w-3.5 h-3.5 fill-pink-400 text-pink-400" />
+                <span className="hidden sm:inline">Tip</span>
+              </button>
             )}
           </div>
         </div>

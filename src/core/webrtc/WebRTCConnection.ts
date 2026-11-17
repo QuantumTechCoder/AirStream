@@ -10,7 +10,25 @@ import type {
   WorkspaceDelta,
 } from './types'
 
-// Multi-provider STUN + TURN configurations
+export function getActiveIceServers(): RTCIceServer[] {
+  const servers = [...ICE_SERVERS]
+  try {
+    const raw = localStorage.getItem('airstream_custom_turn')
+    if (raw) {
+      const custom = JSON.parse(raw)
+      if (custom.server) {
+        servers.unshift({
+          urls: [custom.server],
+          username: custom.username || undefined,
+          credential: custom.credential || undefined,
+        })
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return servers
+}
 // Port 443 with transport=tcp ensures connectivity across cellular carriers with strict CGNAT (e.g. Jio)
 export const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.cloudflare.com:53'] },
@@ -97,7 +115,7 @@ export class WebRTCConnection {
     this.disconnect()
 
     this.peer = new Peer(hostPeerId, {
-      config: { iceServers: ICE_SERVERS },
+      config: { iceServers: getActiveIceServers() },
       debug: 1,
     })
 
@@ -123,7 +141,7 @@ export class WebRTCConnection {
 
     const guestId = `airstream-v2-guest-${Math.random().toString(36).substring(2, 9)}`
     this.peer = new Peer(guestId, {
-      config: { iceServers: ICE_SERVERS },
+      config: { iceServers: getActiveIceServers() },
       debug: 1,
     })
 
@@ -354,7 +372,7 @@ export class WebRTCConnection {
 
   // Offline / Air-Gapped manual SDP exchange support
   public async generateManualOffer(): Promise<string> {
-    this.manualPc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    this.manualPc = new RTCPeerConnection({ iceServers: getActiveIceServers() })
     const channel = this.manualPc.createDataChannel('files', { ordered: true })
     this.attachDataChannelBackpressure({ dataChannel: channel } as any)
 
@@ -380,7 +398,7 @@ export class WebRTCConnection {
   }
 
   public async applyManualOffer(offerBase64: string): Promise<string> {
-    this.manualPc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    this.manualPc = new RTCPeerConnection({ iceServers: getActiveIceServers() })
     this.manualPc.ondatachannel = (e) => {
       this.attachDataChannelBackpressure({ dataChannel: e.channel } as any)
       this.updateState('connected')
