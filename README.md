@@ -80,20 +80,21 @@ You don't need to install anything or set up any servers. Just open the web app:
 ## 🛠️ Architecture & Under the Hood
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph DeviceA["💻 Device A (Sender)"]
         UI_A["AirStream Web UI"]
         FSA_A["64KB Chunk Slicer\n(Framed Packets)"]
-        Backpressure["Backpressure Throttle\n(bufferedAmount <= 256KB)"]
+        Backpressure["Backpressure Controller\n(bufferedAmount <= 256KB)"]
         RTC_A["WebRTC RTCDataChannel\n(DTLS-SRTP Encrypted)"]
-        
+
         UI_A --> FSA_A
         FSA_A --> Backpressure
         Backpressure --> RTC_A
     end
 
-    subgraph Signaling["☁️ Ephemeral Handshake Mailbox"]
-        CF_Signal["Cloudflare Pages Function\n(/api/signal)"]
+    subgraph Infrastructure["☁️ Real-Time Signaling & Traversal"]
+        Signal["WebSocket Signaling Server\n(PeerJS Global Cloud)"]
+        Relay["STUN + TURN Relays\n(Port 443 TCP/UDP - Jio & CGNAT Fallback)"]
     end
 
     subgraph DeviceB["📱 Device B (Receiver)"]
@@ -105,9 +106,11 @@ flowchart LR
         Assembler --> UI_B
     end
 
-    DeviceA <.. "1. Initial Handshake / SDP Exchange" ..> CF_Signal
-    DeviceB <.. "1. Initial Handshake / SDP Exchange" ..> CF_Signal
-    RTC_A <=== "2. Direct High-Speed P2P Data Tunnel (Files, Clipboard, Code)" ===> RTC_B
+    UI_A -.->|"1. SDP Offer & ICE"| Signal
+    UI_B -.->|"1. SDP Answer & ICE"| Signal
+    RTC_A -.->|"NAT Traversal / Relay"| Relay
+    RTC_B -.->|"NAT Traversal / Relay"| Relay
+    RTC_A <==>|"2. Direct Encrypted P2P Stream"| RTC_B
 ```
 
 ### 🧠 Engineering Highlights
@@ -118,7 +121,8 @@ flowchart LR
   - `clipboard`: Fast JSON channel for live clipboard sync.
   - `workspace`: Low-latency delta sync for CodeMirror editing.
   - `ping`: Active heartbeat channel measuring real-time RTT latency in milliseconds.
-- **Dual STUN Configuration**: Uses Cloudflare STUN (`stun:stun.cloudflare.com:3478`) and Google STUN (`stun:stun.l.google.com:19302`) for NAT traversal.
+- **Multi-Region STUN & Port 443 TURN Relays**: Uses Cloudflare STUN (`stun:stun.cloudflare.com:3478`), Google STUN (`stun:stun.l.google.com:19302`), and OpenRelay TURN with TCP/TLS fallback over port 443 to guarantee connections through strict corporate firewalls, university proxies, and symmetric mobile NATs (such as Reliance Jio).
+- **Persistent Global Signaling**: Backed by high-speed WebSocket signaling (`0.peerjs.com`) with instant message delivery (< 20ms) and automatic retry negotiation.
 
 ---
 
