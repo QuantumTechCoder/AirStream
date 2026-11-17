@@ -23,6 +23,8 @@ import {
   verifyOnChainPayment,
   getSavedProLicense,
   saveProLicense,
+  TURN_PASS_DURATION_MS,
+  type ProLicense,
 } from '../../utils/paymentVerifier'
 
 interface TurnPassModalProps {
@@ -37,6 +39,7 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
   const [txHashInput, setTxHashInput] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
+  const [currentLicense, setCurrentLicense] = useState<ProLicense | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSendingWeb3, setIsSendingWeb3] = useState(false)
 
@@ -50,6 +53,7 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
     const saved = getSavedProLicense()
     if (saved && saved.active) {
       setIsUnlocked(true)
+      setCurrentLicense(saved)
     }
 
     const savedTurn = localStorage.getItem('airstream_custom_turn')
@@ -113,7 +117,7 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
 
       const cleanTo = RECIPIENT_WALLET.toLowerCase().replace('0x', '')
       const paddedTo = cleanTo.padStart(64, '0')
-      const rawUnits = BigInt(5 * 1e6) // 5 USDC
+      const rawUnits = BigInt(3 * 1e6) // 3 USDC
       const paddedAmount = rawUnits.toString(16).padStart(64, '0')
       const data = `0xa9059cbb${paddedTo}${paddedAmount}`
 
@@ -150,15 +154,19 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
     setIsVerifying(true)
 
     try {
-      const result = await verifyOnChainPayment(targetHash, chain, 5)
+      const result = await verifyOnChainPayment(targetHash, chain, 3)
       if (result.valid) {
-        saveProLicense({
+        const expiresAt = Date.now() + TURN_PASS_DURATION_MS
+        const license: ProLicense = {
           active: true,
           txHash: targetHash,
           chain,
           verifiedAt: Date.now(),
+          expiresAt,
           tier: 'turn_pass',
-        })
+        }
+        saveProLicense(license)
+        setCurrentLicense(license)
         setIsUnlocked(true)
         onUnlocked()
         confetti({
@@ -168,7 +176,7 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
           colors: ['#00f0ff', '#a855f7', '#10b981'],
         })
       } else {
-        setErrorMessage(result.error || 'Payment not verified on-chain. Minimum 5 USDC required.')
+        setErrorMessage(result.error || 'Payment not verified on-chain. Minimum 3 USDC required.')
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Verification error occurred.')
@@ -225,9 +233,16 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-emerald-300">Pro License Active & Verified</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-emerald-300">Pro License Active &amp; Verified</h4>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Quarterly Pass
+                    </span>
+                  </div>
                   <p className="text-[11px] text-slate-300">
-                    High-bandwidth priority TURN relays and custom server configurations are enabled.
+                    {currentLicense?.expiresAt
+                      ? `Valid for ${Math.max(1, Math.ceil((currentLicense.expiresAt - Date.now()) / (24 * 60 * 60 * 1000)))} more days (High-bandwidth TURN priority active).`
+                      : 'High-bandwidth priority TURN relays and custom server configurations are enabled.'}
                   </p>
                 </div>
               </div>
@@ -320,8 +335,8 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
               {/* Price Tag */}
               <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-cyan-950/40 to-blue-950/40 border border-cyan-500/20">
                 <div>
-                  <span className="text-xs text-slate-400 uppercase font-mono">One-Time Lifetime Access</span>
-                  <div className="text-xl font-black text-cyan-400">5 USDC</div>
+                  <span className="text-[10px] text-slate-400 uppercase font-mono">Quarterly Pass (3 Months)</span>
+                  <div className="text-xl font-black text-cyan-400">3 USDC <span className="text-xs text-slate-400 font-normal">/ 3 mo</span></div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
@@ -350,7 +365,7 @@ export const TurnPassModal: React.FC<TurnPassModalProps> = ({ isOpen, onClose, o
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-xl shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
               >
                 <Wallet className="w-4 h-4" />
-                <span>{isSendingWeb3 ? 'Confirm in Wallet...' : `Pay 5 USDC with Rabby / MetaMask (${NETWORKS[chain].name})`}</span>
+                <span>{isSendingWeb3 ? 'Confirm in Wallet...' : `Pay 3 USDC with Rabby / MetaMask (${NETWORKS[chain].name})`}</span>
               </button>
 
               {/* QR Code & Direct Copy Box */}

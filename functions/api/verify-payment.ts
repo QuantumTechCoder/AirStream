@@ -40,7 +40,7 @@ export async function onRequest(context: any): Promise<Response> {
   }
 
   try {
-    const { txHash, chain = 'base', minAmount = 5 } = await request.json()
+    const { txHash, chain = 'base', minAmount = 3 } = await request.json()
 
     if (!txHash || !/^0x([A-Fa-f0-9]{64})$/.test(txHash.trim())) {
       return new Response(JSON.stringify({ error: 'Invalid transaction hash format' }), {

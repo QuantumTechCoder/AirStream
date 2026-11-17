@@ -175,14 +175,24 @@ export interface ProLicense {
   txHash: string
   chain: SupportedChain
   verifiedAt: number
+  expiresAt?: number
   tier: 'turn_pass' | 'white_label'
 }
+
+export const TURN_PASS_DURATION_MS = 90 * 24 * 60 * 60 * 1000 // 90 days (3 months)
 
 export function getSavedProLicense(): ProLicense | null {
   try {
     const raw = localStorage.getItem(LICENSE_KEY)
     if (!raw) return null
-    return JSON.parse(raw)
+    const license = JSON.parse(raw) as ProLicense
+    // Check if expired (3 months)
+    if (license.expiresAt && Date.now() > license.expiresAt) {
+      license.active = false
+      localStorage.setItem(LICENSE_KEY, JSON.stringify(license))
+      return null
+    }
+    return license
   } catch {
     return null
   }

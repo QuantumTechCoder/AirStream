@@ -167,11 +167,11 @@ Many creative agencies, video editors, and privacy-conscious teams want their ow
 
 ---
 
-### 🛡️ 2. Pro Firewall-Bypass TURN Relay Key (5 USDC — Lifetime)
+### 🛡️ 2. Pro Firewall-Bypass TURN Relay Key (3 USDC / 3 Months — Quarterly Pass)
 While basic WebRTC works great on standard home Wi-Fi, aggressive corporate firewalls, university proxies, and symmetric cellular NATs can block direct peer connections:
 - Unlock priority high-throughput TURN relays with TCP fallback over port 443 (undetectable by DPI firewalls).
 - Unlock custom TURN server inputs (plug in your own private coturn, Twilio, or Metered credentials).
-- Cryptographically verified on-chain.
+- Active for 90 days with cryptographic on-chain verification and renewal tracking.
 
 ---
 
