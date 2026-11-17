@@ -1,0 +1,7 @@
+# GitHub Native Sponsorship and Funding Configuration for AirStream
+
+github: [QuantumTechCoder]
+custom:
+  - 'https://air-stream.pages.dev'
+  - 'https://basescan.org/address/0x2cef0473f985156eDe84312Ce0BeB94B602d26E4'
+  - 'https://polygonscan.com/address/0x2cef0473f985156eDe84312Ce0BeB94B602d26E4'

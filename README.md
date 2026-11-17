@@ -20,6 +20,8 @@
 
 *No accounts. No installations. No cloud upload limits.*
 
+💼 *Need a custom-branded company portal (`transfer.yourcompany.com`) or Firewall-Bypass TURN pass? [**See Commercial &amp; Pro Options &rarr;**](#-white-label--commercial-services) (3–30 USDC on Base/Polygon)*
+
 </div>
 
 ---
