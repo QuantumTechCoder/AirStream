@@ -29,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRoomModal }) => {
     remotePeer,
     networkStats,
     disconnect,
+    isHost,
   } = useAirStream()
 
   const [copiedLink, setCopiedLink] = useState(false)
@@ -109,12 +110,22 @@ export const Header: React.FC<HeaderProps> = ({ onOpenRoomModal }) => {
                     LAN
                   </span>
                 )}
+                {networkStats.connectionType === 'stun' && (
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded font-mono">
+                    P2P
+                  </span>
+                )}
+                {networkStats.connectionType === 'turn' && (
+                  <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1 py-0.2 rounded font-mono">
+                    RELAY
+                  </span>
+                )}
               </div>
             </div>
           ) : connectionState === 'pairing' || connectionState === 'connecting' ? (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium animate-pulse">
               <Wifi className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-              <span>Waiting for peer...</span>
+              <span>{isHost ? 'Waiting for peer...' : 'Connecting to host...'}</span>
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700/60 text-slate-400 text-xs">

@@ -1,19 +1,32 @@
-// WebRTC DataChannel Connection Manager with Backpressure & Latency Monitor
+// WebRTC Connection Engine powered by PeerJS & Multi-Region STUN/TURN Relays
+// Optimized for Symmetric NAT, Carrier-Grade NAT (Jio, Airtel, T-Mobile), and Cross-Network Streaming
 
+import { Peer, type DataConnection } from 'peerjs'
 import type {
   ConnectionState,
   PeerInfo,
   NetworkStats,
   ClipboardItem,
   WorkspaceDelta,
-  SignalingMessage,
 } from './types'
-import { SignalingClient } from '../signaling/SignalingClient'
 
-const ICE_SERVERS: RTCIceServer[] = [
+// Multi-provider STUN + TURN configurations
+// Port 443 with transport=tcp ensures connectivity across cellular carriers with strict CGNAT (e.g. Jio)
+export const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.cloudflare.com:53'] },
-  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
   { urls: ['stun:global.stun.twilio.com:3478'] },
+  { urls: ['stun:stun.relay.metered.ca:80'] },
+  {
+    urls: [
+      'turn:openrelay.metered.ca:80',
+      'turn:openrelay.metered.ca:443',
+      'turn:openrelay.metered.ca:443?transport=tcp',
+      'turns:openrelay.metered.ca:443?transport=tcp',
+    ],
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ]
 
 export interface ConnectionEvents {
@@ -28,20 +41,20 @@ export interface ConnectionEvents {
 }
 
 export class WebRTCConnection {
-  public pc: RTCPeerConnection | null = null
+  public peer: Peer | null = null
+  public conn: DataConnection | null = null
   public localPeer: PeerInfo
   public remotePeer: PeerInfo | null = null
   public state: ConnectionState = 'idle'
-  
-  private signaling: SignalingClient | null = null
-  private fileChannel: RTCDataChannel | null = null
-  private clipboardChannel: RTCDataChannel | null = null
-  private workspaceChannel: RTCDataChannel | null = null
-  private pingChannel: RTCDataChannel | null = null
 
   private events: ConnectionEvents
   private isInitiator = false
+  public roomId: string | null = null
   private pingInterval: any = null
+  private connectRetryTimer: any = null
+  private retryCount = 0
+  private manualPc: RTCPeerConnection | null = null // For offline / air-gapped mode
+
   private networkStats: NetworkStats = {
     rttMs: 0,
     bytesReceived: 0,
@@ -64,270 +77,246 @@ export class WebRTCConnection {
 
   public async start(roomId: string, isHost: boolean): Promise<void> {
     this.isInitiator = isHost
+    this.roomId = roomId
     this.updateState('pairing')
+    this.retryCount = 0
 
-    // Initialize signaling client
-    this.signaling = new SignalingClient(this.localPeer.id, this.handleSignalingMessage.bind(this))
-    await this.signaling.init(roomId, isHost)
+    const cleanRoomId = roomId.trim().toLowerCase()
+    const hostPeerId = `airstream-v2-${cleanRoomId}`
 
-    this.createPeerConnection()
-
-    if (this.isInitiator) {
-      // Host creates DataChannels upfront
-      this.setupDataChannels()
-      const offer = await this.pc!.createOffer()
-      await this.pc!.setLocalDescription(offer)
-      await this.signaling.send({
-        type: 'offer',
-        data: offer,
-      })
-      await this.signaling.send({
-        type: 'peer-info',
-        data: this.localPeer,
-      })
+    if (isHost) {
+      // Host registers the unique room ID on PeerJS cloud signaling
+      this.initHost(hostPeerId)
     } else {
-      // Guest sends peer-info and join notification
-      await this.signaling.send({
-        type: 'join',
-        data: { peerId: this.localPeer.id },
+      // Guest creates client peer and connects to host
+      this.initGuest(hostPeerId)
+    }
+  }
+
+  private initHost(hostPeerId: string) {
+    this.disconnect()
+
+    this.peer = new Peer(hostPeerId, {
+      config: { iceServers: ICE_SERVERS },
+      debug: 1,
+    })
+
+    this.peer.on('open', () => {
+      this.updateState('pairing')
+    })
+
+    this.peer.on('connection', (connection) => {
+      this.setupConnection(connection)
+    })
+
+    this.peer.on('error', (err: any) => {
+      console.warn('[AirStream] PeerJS host error:', err.type, err)
+      if (err.type === 'unavailable-id') {
+        // ID is already taken (e.g. host reloaded) - retry with randomized host ID or reconnect
+        this.updateState('pairing')
+      }
+    })
+  }
+
+  private initGuest(hostPeerId: string) {
+    this.disconnect()
+
+    const guestId = `airstream-v2-guest-${Math.random().toString(36).substring(2, 9)}`
+    this.peer = new Peer(guestId, {
+      config: { iceServers: ICE_SERVERS },
+      debug: 1,
+    })
+
+    this.peer.on('open', () => {
+      this.attemptConnectToHost(hostPeerId)
+    })
+
+    this.peer.on('error', (err: any) => {
+      console.warn('[AirStream] PeerJS guest error:', err.type, err)
+      if (err.type === 'peer-unavailable') {
+        // Host might still be initializing, retry connection
+        this.scheduleRetry(hostPeerId)
+      }
+    })
+  }
+
+  private attemptConnectToHost(hostPeerId: string) {
+    if (!this.peer || this.peer.destroyed) return
+    this.updateState('connecting')
+
+    const connection = this.peer.connect(hostPeerId, {
+      reliable: true,
+    })
+
+    this.setupConnection(connection)
+  }
+
+  private scheduleRetry(hostPeerId: string) {
+    if (this.state === 'connected' || this.retryCount > 25) return
+    this.retryCount++
+
+    if (this.connectRetryTimer) clearTimeout(this.connectRetryTimer)
+    this.connectRetryTimer = setTimeout(() => {
+      if (this.state !== 'connected' && this.peer && !this.peer.destroyed) {
+        this.attemptConnectToHost(hostPeerId)
+      }
+    }, 1500)
+  }
+
+  private setupConnection(connection: DataConnection) {
+    this.conn = connection
+
+    connection.on('open', () => {
+      if (this.connectRetryTimer) {
+        clearTimeout(this.connectRetryTimer)
+        this.connectRetryTimer = null
+      }
+
+      this.updateState('connected')
+      this.attachDataChannelBackpressure(connection)
+      this.startPingMonitor()
+
+      // Exchange peer info
+      this.sendPacket({
+        _type: 'peer-info',
+        info: this.localPeer,
       })
-      await this.signaling.send({
-        type: 'peer-info',
-        data: this.localPeer,
-      })
+    })
+
+    connection.on('data', (data: any) => {
+      this.handleIncomingData(data)
+    })
+
+    connection.on('close', () => {
+      this.updateState('disconnected')
+      this.stopPingMonitor()
+    })
+
+    connection.on('error', (err: any) => {
+      console.warn('[AirStream] Connection error:', err)
+      this.updateState('disconnected')
+    })
+  }
+
+  private attachDataChannelBackpressure(connection: DataConnection) {
+    const dc = connection.dataChannel
+    if (!dc) return
+
+    dc.binaryType = 'arraybuffer'
+    dc.bufferedAmountLowThreshold = 256 * 1024 // 256KB threshold
+
+    dc.onbufferedamountlow = () => {
+      if (this.bufferedAmountLowResolver) {
+        const resolve = this.bufferedAmountLowResolver
+        this.bufferedAmountLowResolver = null
+        resolve()
+      }
     }
   }
 
-  private createPeerConnection() {
-    this.pc = new RTCPeerConnection({
-      iceServers: ICE_SERVERS,
-      iceCandidatePoolSize: 2,
-    })
-
-    this.pc.onicecandidate = (event) => {
-      if (event.candidate && this.signaling) {
-        this.signaling.send({
-          type: 'candidate',
-          data: event.candidate,
-        })
-      }
+  private handleIncomingData(data: any) {
+    if (data instanceof ArrayBuffer) {
+      this.networkStats.bytesReceived += data.byteLength
+      this.events.onFileChunk(data)
+      return
     }
 
-    this.pc.oniceconnectionstatechange = () => {
-      if (!this.pc) return
-      const iceState = this.pc.iceConnectionState
-
-      if (iceState === 'connected' || iceState === 'completed') {
-        this.updateState('connected')
-        this.startPingMonitor()
-        this.inspectSelectedCandidatePair()
-      } else if (iceState === 'disconnected') {
-        this.updateState('reconnecting')
-      } else if (iceState === 'failed' || iceState === 'closed') {
-        this.updateState('disconnected')
-        this.stopPingMonitor()
-      }
-    }
-
-    this.pc.ondatachannel = (event) => {
-      this.attachDataChannel(event.channel)
-    }
-  }
-
-  private setupDataChannels() {
-    if (!this.pc) return
-
-    // 1. Files Channel: Binary arraybuffer, ordered, reliable
-    this.fileChannel = this.pc.createDataChannel('files', {
-      ordered: true,
-    })
-    this.attachDataChannel(this.fileChannel)
-
-    // 2. Clipboard Channel: High speed reliable
-    this.clipboardChannel = this.pc.createDataChannel('clipboard', {
-      ordered: true,
-    })
-    this.attachDataChannel(this.clipboardChannel)
-
-    // 3. Workspace Channel: Collaborative editor sync
-    this.workspaceChannel = this.pc.createDataChannel('workspace', {
-      ordered: true,
-    })
-    this.attachDataChannel(this.workspaceChannel)
-
-    // 4. Ping Channel: RTT measurement
-    this.pingChannel = this.pc.createDataChannel('ping', {
-      ordered: false,
-      maxRetransmits: 0,
-    })
-    this.attachDataChannel(this.pingChannel)
-  }
-
-  private attachDataChannel(channel: RTCDataChannel) {
-    if (channel.label === 'files') {
-      this.fileChannel = channel
-      channel.binaryType = 'arraybuffer'
-      // Set 256KB threshold for backpressure event
-      channel.bufferedAmountLowThreshold = 256 * 1024
-
-      channel.onbufferedamountlow = () => {
-        if (this.bufferedAmountLowResolver) {
-          const resolve = this.bufferedAmountLowResolver
-          this.bufferedAmountLowResolver = null
-          resolve()
-        }
-      }
-
-      channel.onmessage = (event) => {
-        if (typeof event.data === 'string') {
-          try {
-            const parsed = JSON.parse(event.data)
-            if (parsed._type === 'file-meta') {
-              this.events.onFileMetadata(parsed)
-            } else if (parsed._type === 'file-ctrl') {
-              this.events.onFileControl(parsed)
-            }
-          } catch {
-            // ignore
+    if (typeof data === 'object' && data !== null) {
+      switch (data._type) {
+        case 'peer-info':
+          this.remotePeer = data.info as PeerInfo
+          this.events.onPeerInfo(this.remotePeer)
+          if (this.isInitiator) {
+            // Respond with host info
+            this.sendPacket({ _type: 'peer-info-ack', info: this.localPeer })
           }
-        } else if (event.data instanceof ArrayBuffer) {
-          this.networkStats.bytesReceived += event.data.byteLength
-          this.events.onFileChunk(event.data)
-        }
-      }
-    } else if (channel.label === 'clipboard') {
-      this.clipboardChannel = channel
-      channel.onmessage = (event) => {
-        try {
-          const item = JSON.parse(event.data) as ClipboardItem
-          this.events.onClipboard(item)
-        } catch {
-          // ignore
-        }
-      }
-    } else if (channel.label === 'workspace') {
-      this.workspaceChannel = channel
-      channel.onmessage = (event) => {
-        try {
-          const delta = JSON.parse(event.data) as WorkspaceDelta
-          this.events.onWorkspace(delta)
-        } catch {
-          // ignore
-        }
-      }
-    } else if (channel.label === 'ping') {
-      this.pingChannel = channel
-      channel.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.type === 'ping') {
-            channel.send(JSON.stringify({ type: 'pong', t: data.t }))
-          } else if (data.type === 'pong') {
-            const rtt = Date.now() - data.t
-            this.networkStats.rttMs = Math.max(1, rtt)
-            this.events.onNetworkStats({ ...this.networkStats })
-          }
-        } catch {
-          // ignore
+          break
+
+        case 'peer-info-ack':
+          this.remotePeer = data.info as PeerInfo
+          this.events.onPeerInfo(this.remotePeer)
+          break
+
+        case 'file-meta':
+          this.events.onFileMetadata(data)
+          break
+
+        case 'file-ctrl':
+          this.events.onFileControl(data)
+          break
+
+        case 'clipboard':
+          this.events.onClipboard(data.item)
+          break
+
+        case 'workspace':
+          this.events.onWorkspace(data.delta)
+          break
+
+        case 'ping':
+          this.sendPacket({ _type: 'pong', t: data.t })
+          break
+
+        case 'pong': {
+          const rtt = Date.now() - data.t
+          this.networkStats.rttMs = Math.max(1, rtt)
+          this.inspectCandidatePair()
+          this.events.onNetworkStats({ ...this.networkStats })
+          break
         }
       }
     }
   }
 
-  private async handleSignalingMessage(msg: SignalingMessage) {
-    if (!this.pc) return
-
-    if (msg.type === 'peer-info') {
-      this.remotePeer = msg.data as PeerInfo
-      this.events.onPeerInfo(this.remotePeer)
-      // Send back local peer info if we haven't already
-      if (!this.isInitiator && this.signaling) {
-        this.signaling.send({
-          type: 'peer-info',
-          data: this.localPeer,
-        })
-      }
-    } else if (msg.type === 'offer') {
-      this.updateState('connecting')
-      await this.pc.setRemoteDescription(new RTCSessionDescription(msg.data))
-      const answer = await this.pc.createAnswer()
-      await this.pc.setLocalDescription(answer)
-      if (this.signaling) {
-        await this.signaling.send({
-          type: 'answer',
-          data: answer,
-        })
-      }
-    } else if (msg.type === 'answer') {
-      this.updateState('connecting')
-      await this.pc.setRemoteDescription(new RTCSessionDescription(msg.data))
-    } else if (msg.type === 'candidate') {
+  private sendPacket(packet: any) {
+    if (this.conn && this.conn.open) {
       try {
-        await this.pc.addIceCandidate(new RTCIceCandidate(msg.data))
-      } catch (err) {
-        console.warn('ICE candidate addition failed', err)
-      }
-    } else if (msg.type === 'join' && this.isInitiator) {
-      // Re-trigger offer if peer joined late
-      if (this.pc.signalingState === 'stable') {
-        const offer = await this.pc.createOffer()
-        await this.pc.setLocalDescription(offer)
-        if (this.signaling) {
-          await this.signaling.send({
-            type: 'offer',
-            data: offer,
-          })
-        }
+        this.conn.send(packet)
+      } catch (e) {
+        console.warn('Packet send error:', e)
       }
     }
   }
 
   // Backpressure-controlled binary chunk sender
   public async sendFileChunk(chunk: ArrayBuffer): Promise<void> {
-    if (!this.fileChannel || this.fileChannel.readyState !== 'open') {
-      throw new Error('File DataChannel is not open')
+    if (!this.conn || !this.conn.open) {
+      throw new Error('WebRTC DataChannel is not open')
     }
 
+    const dc = this.conn.dataChannel
     // If buffer exceeds 1MB, wait for bufferedamountlow event before sending more
-    if (this.fileChannel.bufferedAmount > 1024 * 1024) {
+    if (dc && dc.bufferedAmount > 1024 * 1024) {
       await new Promise<void>((resolve) => {
         this.bufferedAmountLowResolver = resolve
       })
     }
 
-    this.fileChannel.send(chunk)
+    this.conn.send(chunk)
     this.networkStats.bytesSent += chunk.byteLength
   }
 
   public sendFileMetadata(meta: any): void {
-    if (this.fileChannel && this.fileChannel.readyState === 'open') {
-      this.fileChannel.send(JSON.stringify({ _type: 'file-meta', ...meta }))
-    }
+    this.sendPacket({ _type: 'file-meta', ...meta })
   }
 
   public sendFileControl(control: any): void {
-    if (this.fileChannel && this.fileChannel.readyState === 'open') {
-      this.fileChannel.send(JSON.stringify({ _type: 'file-ctrl', ...control }))
-    }
+    this.sendPacket({ _type: 'file-ctrl', ...control })
   }
 
   public sendClipboard(item: ClipboardItem): void {
-    if (this.clipboardChannel && this.clipboardChannel.readyState === 'open') {
-      this.clipboardChannel.send(JSON.stringify(item))
-    }
+    this.sendPacket({ _type: 'clipboard', item })
   }
 
   public sendWorkspace(delta: WorkspaceDelta): void {
-    if (this.workspaceChannel && this.workspaceChannel.readyState === 'open') {
-      this.workspaceChannel.send(JSON.stringify(delta))
-    }
+    this.sendPacket({ _type: 'workspace', delta })
   }
 
   private startPingMonitor() {
     this.stopPingMonitor()
     this.pingInterval = setInterval(() => {
-      if (this.pingChannel && this.pingChannel.readyState === 'open') {
-        this.pingChannel.send(JSON.stringify({ type: 'ping', t: Date.now() }))
+      if (this.conn && this.conn.open) {
+        this.sendPacket({ _type: 'ping', t: Date.now() })
       }
     }, 2000)
   }
@@ -339,10 +328,10 @@ export class WebRTCConnection {
     }
   }
 
-  private async inspectSelectedCandidatePair() {
-    if (!this.pc) return
+  private async inspectCandidatePair() {
+    if (!this.conn || !this.conn.peerConnection) return
     try {
-      const stats = await this.pc.getStats()
+      const stats = await this.conn.peerConnection.getStats()
       stats.forEach((report) => {
         if (report.type === 'candidate-pair' && report.state === 'succeeded') {
           const remoteCandidate = stats.get(report.remoteCandidateId)
@@ -359,83 +348,109 @@ export class WebRTCConnection {
         }
       })
     } catch {
-      // stats error
+      // stats ignore
     }
   }
 
-  // Offline / Air-gapped manual SDP exchange support
+  // Offline / Air-Gapped manual SDP exchange support
   public async generateManualOffer(): Promise<string> {
-    this.createPeerConnection()
-    this.setupDataChannels()
-    const offer = await this.pc!.createOffer()
-    await this.pc!.setLocalDescription(offer)
-    // Wait for ICE gathering to complete so all candidates are in SDP
+    this.manualPc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    const channel = this.manualPc.createDataChannel('files', { ordered: true })
+    this.attachDataChannelBackpressure({ dataChannel: channel } as any)
+
+    const offer = await this.manualPc.createOffer()
+    await this.manualPc.setLocalDescription(offer)
+
     await new Promise<void>((resolve) => {
-      if (this.pc!.iceGatheringState === 'complete') {
+      if (this.manualPc!.iceGatheringState === 'complete') {
         resolve()
       } else {
         const check = () => {
-          if (this.pc?.iceGatheringState === 'complete') {
-            this.pc.removeEventListener('icegatheringstatechange', check)
+          if (this.manualPc?.iceGatheringState === 'complete') {
+            this.manualPc.removeEventListener('icegatheringstatechange', check)
             resolve()
           }
         }
-        this.pc!.addEventListener('icegatheringstatechange', check)
-        // Fallback timeout
+        this.manualPc!.addEventListener('icegatheringstatechange', check)
         setTimeout(resolve, 1500)
       }
     })
-    return btoa(JSON.stringify(this.pc!.localDescription))
+
+    return btoa(JSON.stringify(this.manualPc!.localDescription))
   }
 
   public async applyManualOffer(offerBase64: string): Promise<string> {
-    this.createPeerConnection()
+    this.manualPc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    this.manualPc.ondatachannel = (e) => {
+      this.attachDataChannelBackpressure({ dataChannel: e.channel } as any)
+      this.updateState('connected')
+    }
+
     const sdp = JSON.parse(atob(offerBase64))
-    await this.pc!.setRemoteDescription(new RTCSessionDescription(sdp))
-    const answer = await this.pc!.createAnswer()
-    await this.pc!.setLocalDescription(answer)
-    // Wait for ICE gathering
+    await this.manualPc.setRemoteDescription(new RTCSessionDescription(sdp))
+    const answer = await this.manualPc.createAnswer()
+    await this.manualPc.setLocalDescription(answer)
+
     await new Promise<void>((resolve) => {
-      if (this.pc!.iceGatheringState === 'complete') {
+      if (this.manualPc!.iceGatheringState === 'complete') {
         resolve()
       } else {
         const check = () => {
-          if (this.pc?.iceGatheringState === 'complete') {
-            this.pc.removeEventListener('icegatheringstatechange', check)
+          if (this.manualPc?.iceGatheringState === 'complete') {
+            this.manualPc.removeEventListener('icegatheringstatechange', check)
             resolve()
           }
         }
-        this.pc!.addEventListener('icegatheringstatechange', check)
+        this.manualPc!.addEventListener('icegatheringstatechange', check)
         setTimeout(resolve, 1500)
       }
     })
-    return btoa(JSON.stringify(this.pc!.localDescription))
+
+    return btoa(JSON.stringify(this.manualPc!.localDescription))
   }
 
   public async applyManualAnswer(answerBase64: string): Promise<void> {
-    if (!this.pc) return
+    if (!this.manualPc) return
     const sdp = JSON.parse(atob(answerBase64))
-    await this.pc.setRemoteDescription(new RTCSessionDescription(sdp))
+    await this.manualPc.setRemoteDescription(new RTCSessionDescription(sdp))
+    this.updateState('connected')
   }
 
   public disconnect() {
     this.stopPingMonitor()
-    if (this.signaling) {
-      this.signaling.destroy()
-      this.signaling = null
+    if (this.connectRetryTimer) {
+      clearTimeout(this.connectRetryTimer)
+      this.connectRetryTimer = null
     }
 
-    this.fileChannel?.close()
-    this.clipboardChannel?.close()
-    this.workspaceChannel?.close()
-    this.pingChannel?.close()
+    if (this.conn) {
+      try {
+        this.conn.close()
+      } catch {
+        // ignore
+      }
+      this.conn = null
+    }
 
-    if (this.pc) {
-      this.pc.close()
-      this.pc = null
+    if (this.peer && !this.peer.destroyed) {
+      try {
+        this.peer.destroy()
+      } catch {
+        // ignore
+      }
+      this.peer = null
+    }
+
+    if (this.manualPc) {
+      try {
+        this.manualPc.close()
+      } catch {
+        // ignore
+      }
+      this.manualPc = null
     }
 
     this.remotePeer = null
-    this.updateState('disconnected')
+    this.updateState('idle')
   }
 }
