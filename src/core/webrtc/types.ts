@@ -58,6 +58,8 @@ export interface TransferItem {
   etaSeconds: number
   status: TransferStatus
   isSender: boolean
+  storageMode?: 'fsa' | 'opfs' | 'ram'
+  savedDirectlyToDisk?: boolean
   error?: string
   blobUrl?: string
   downloadUrl?: string

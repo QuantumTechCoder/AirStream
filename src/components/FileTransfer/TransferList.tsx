@@ -175,6 +175,26 @@ const TransferCard: React.FC<TransferCardProps> = ({
                 {formatBytes(item.bytesTransferred)} / {formatBytes(item.size)}
               </span>
 
+              {item.storageMode && item.storageMode !== 'ram' && (
+                <>
+                  <span className="text-slate-600">•</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-semibold tracking-wide uppercase ${
+                      item.storageMode === 'fsa'
+                        ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40'
+                        : 'bg-purple-950 text-purple-300 border border-purple-500/40'
+                    }`}
+                    title={
+                      item.storageMode === 'fsa'
+                        ? 'Direct-to-disk streaming via File System Access API (Zero-RAM)'
+                        : 'Sandboxed direct-to-disk streaming via Origin Private File System (OPFS)'
+                    }
+                  >
+                    {item.storageMode === 'fsa' ? 'Direct Disk' : 'OPFS Safe'}
+                  </span>
+                </>
+              )}
+
               {item.status === 'transferring' && (
                 <>
                   <span className="text-slate-600">•</span>
@@ -245,6 +265,13 @@ const TransferCard: React.FC<TransferCardProps> = ({
                 <Download className="w-4 h-4" />
                 <span>Save</span>
               </a>
+            )}
+
+            {item.status === 'completed' && !item.isSender && item.savedDirectlyToDisk && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-xs font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="hidden sm:inline">On Disk</span>
+              </span>
             )}
 
             {item.status === 'completed' && onOpenTip && (
