@@ -1,6 +1,6 @@
 ---
 title: "Show DEV: AirStream — Stream Gigabytes Browser-to-Browser with WebRTC (No Cloud, No Size Limits)"
-published: false
+published: true
 description: "Why upload an 8GB file to a cloud server just to download it again? Here's how I built AirStream: a browser-to-browser P2P file streamer and collaborative workspace."
 tags: showdev, webdev, webrtc, opensource
 canonical_url: https://air-stream.pages.dev
