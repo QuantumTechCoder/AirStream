@@ -138,23 +138,11 @@ export async function verifyOnChainPayment(
 
 ---
 
-### The Three Monetization Pillars
+### The Sustainable Monetization Pillars
 
-With zero-trust on-chain verification in place, I created three practical tiers tailored for different user needs:
+With zero-trust on-chain verification in place, I introduced two practical commercial offerings that keep the core P2P app 100% free while funding ongoing relay infrastructure:
 
-#### 1. "Fuel the Dev" (1-Click USDC Micro-Tipping)
-
-When someone transfers a 20GB Premiere project or 4K drone footage between devices across the room without paying a subscription, they are genuinely grateful.
-
-![Tip the Developer with 1-Click USDC](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/tip-usdc-modal-4k.png)
-
-- **Presets**: 1, 2, 5, or 10 USDC.
-- **1-Click Web3 Integration**: Users with MetaMask, Rabby, Rainbow, or Coinbase Wallet click one button. The app automatically triggers `window.ethereum` with the exact ERC-20 transfer parameters.
-- **QR Code & External Exchange Fallback**: Users without browser wallets can scan the QR code from Binance, Coinbase, or Bybit and paste the transaction hash for instant zero-trust verification.
-
----
-
-#### 2. Firewall-Bypass TURN Relay Pro Pass (3 USDC / 3 Months)
+#### 1. Firewall-Bypass TURN Relay Pro Pass (3 USDC / 3 Months)
 
 For 90% of transfers, direct STUN works out of the box and is **100% free forever**.
 
@@ -170,7 +158,7 @@ However, students behind university firewalls or colleagues in strict corporate 
 
 ---
 
-#### 3. Custom White-Label Deployment for Teams & Agencies (30 USDC)
+#### 2. Custom White-Label Deployment for Teams & Agencies (30 USDC)
 
 Video production agencies, law firms, and medical clinics frequently deal with sensitive multi-gigabyte files. They don't want their clients to see an AirStream logo, nor do they want to pay \$20–\$30/user/month to WeTransfer or Dropbox Teams.
 
@@ -192,6 +180,21 @@ Building this convinced me that low-cost EVM networks like Base and Polygon are 
 2. **Instant Global Reach**: Anyone in the world with an internet connection can pay \$1 or \$30 without currency conversion penalties.
 3. **No Database Burden**: The blockchain serves as your payment database. You query receipts on-demand with open JSON-RPC endpoints.
 4. **Keeps Open-Source Free**: By charging for convenience (white-labeling) and infrastructure-heavy edge cases (TURN relays), the core P2P application stays 100% free, MIT-licensed, and community-driven.
+
+---
+
+### Fuel the Dev (Tip Me a Coffee in USDC) ☕
+
+Building and maintaining an open-source, privacy-first tool with zero tracking and zero cloud lock-in takes a lot of late nights and caffeine.
+
+A tipping button shouldn't be masqueraded as a "product feature"—if AirStream genuinely saved your sanity, rescued you from a 2GB WeTransfer cap, or let you zap a 30GB video file across the room without paying a \$20/month SaaS subscription, feel free to fuel future development!
+
+![Fuel the Developer with 1-Click USDC](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/tip-usdc-modal-4k.png)
+
+You can hit the **Tip** button directly on **[air-stream.pages.dev](https://air-stream.pages.dev)** to send 1, 2, 5, or 10 USDC with 1-click via Rabby / MetaMask (gas on Base and Polygon is less than a penny!), or send directly to my EVM address:
+`0x2cef0473f985156eDe84312Ce0BeB94B602d26E4`
+
+Every micro-tip keeps the project independent, free from corporate ads, and 100% open-source for everyone.
 
 ---
 
