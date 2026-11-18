@@ -4,7 +4,7 @@ published: false
 description: "Why upload an 8GB file to a cloud server just to download it again? Here's how I built AirStream: a browser-to-browser P2P file streamer and collaborative workspace."
 tags: showdev, webdev, webrtc, opensource
 canonical_url: https://air-stream.pages.dev
-cover_image: https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/icon.svg
+main_image: https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/cover.jpg
 ---
 
 > **TL;DR**  
@@ -33,6 +33,8 @@ So, as any reasonable developer with too much caffeine would do, I decided to bu
 
 ### What is AirStream?
 
+![AirStream Web Interface](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/hero-banner.jpg)
+
 **AirStream** is a zero-install, Progressive Web App (PWA) that opens an encrypted, direct peer-to-peer data pipeline between any two browsers using **WebRTC `RTCDataChannel`**.
 
 - 🚫 **Zero File Size Limits**: Send 200MB, 5GB, or 50GB. The browser doesn't choke.
@@ -54,7 +56,9 @@ Here are the biggest architectural hurdles I hit and how I solved them:
 
 If you naively try to read a 5GB file using `FileReader.readAsArrayBuffer()` or shove slices into an `RTCDataChannel` in a `while` loop, you will instantly crash the user's browser tab. 
 
-Why? Because the browser's JavaScript engine will load the entire payload into RAM faster than the underlying OS socket can flush the packets over the network. The buffer explodes, memory spikes to 8GB, and the tab silently vanishes with an `OutOfMemory` error.
+Why? Because the browser's JavaScript engine will load the entire payload into RAM faster than the underlying OS socket can flush the packets over the network. The buffer explodes, memory spikes to multiple gigabytes, and the tab silently vanishes with an `OutOfMemory` error.
+
+![AirStream Drag and Drop File Streamer](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/file-stream.jpg)
 
 **The Fix:**
 I implemented backpressure regulation using `RTCDataChannel.bufferedAmount` and `bufferedAmountLowThreshold`:
@@ -91,7 +95,7 @@ By throttling chunk creation against the network driver's drain rate, RAM consum
 
 WebRTC DataChannels don't inherently know where one file ends and another begins if you send raw buffers. To solve this, every 64KB slice is wrapped in a lightweight binary header:
 
-```
+```plaintext
 [4 Bytes: Chunk Index (Uint32)]
 [4 Bytes: File ID Length (Uint32)]
 [N Bytes: File ID (UTF-8)]
@@ -134,11 +138,26 @@ Because mobile networks never block port 443 (HTTPS), WebRTC seamlessly falls ba
 
 ---
 
-#### 4. The Air-Gapped / Offline QR Mode
+#### 4. The Collaborative Workspace (Clipboard & Code Editor)
+
+Because WebRTC DataChannels allow multiplexed arbitrary data channels, AirStream also doubles as an instant device bridge for text, links, and code snippets:
+
+![Live Synchronized Clipboard](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/live-clipboard.jpg)
+
+![Collaborative Code Scratchpad](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/code-workspace.png)
+
+Whether you need to quickly copy an authentication OTP, an API token, or write code together in real-time using CodeMirror 6 with full syntax highlighting (JS, TS, Python, Markdown, JSON), changes sync in sub-10 milliseconds.
+
+---
+
+#### 5. The Air-Gapped / Offline QR Mode
 
 What happens if you are in an airplane, a basement, or on a remote film set with an isolated local Wi-Fi router and **zero internet access**?
 
-Because normal signaling requires an external server, AirStream includes a dedicated **Offline / Air-Gapped SDP Exchanger**. 
+Because normal signaling requires an external server, AirStream includes a dedicated **Offline / Air-Gapped SDP Exchanger**:
+
+![Pair Devices via QR, Room Code or Offline Air-Gapped SDP](https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/screenshots/pair-modal.png)
+
 Device A generates a base64-compressed SDP Offer as a QR code. Device B scans it with its camera, generates an Answer QR code, and Device A scans it back. 
 
 Boom. Direct peer-to-peer data transfer with **zero connection to the outside internet**.
