@@ -1,9 +1,8 @@
 ---
 title: "Show DEV: Monetizing an Open Source WebRTC App Without Stripe, Subscriptions, or Paywalls (Part 2)"
-published: false
+published: true
 description: "How I built an on-chain, zero-trust micropayment and licensing engine with USDC on Base and Polygon—keeping P2P free forever while selling TURN relay passes and enterprise white-labeling."
 tags: showdev, webdev, web3, opensource
-canonical_url: https://air-stream.pages.dev
 main_image: https://raw.githubusercontent.com/QuantumTechCoder/AirStream/main/public/cover_part2.jpg
 ---
 
